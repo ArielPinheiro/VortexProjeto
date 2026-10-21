@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OrbScene from './OrbScene';
 import { fazerLogin } from '../services/auth';
@@ -16,6 +16,10 @@ export default function LoginNeocore() {
   const [veil, setVeil] = useState(false);
 
   const mfaRefs = useRef([]);
+
+  useEffect(() => {
+    document.body.classList.remove('dark-bg');
+  }, []);
 
   /* ---------- MFA input handlers ---------- */
   const handleMfaInput = (index, value) => {
@@ -95,7 +99,8 @@ export default function LoginNeocore() {
       }
     }
 
-    /* Exibe véu para a transição */
+    /* Exibe véu e ativa fundo escuro para a transição suave */
+    document.body.classList.add('dark-bg');
     setVeil(true);
 
     const delay = prefersReducedMotion ? 100 : 800;
@@ -112,21 +117,12 @@ export default function LoginNeocore() {
   return (
     <>
       <div className="page">
-        {/* Logo superior esquerda */}
-        <img className="corner-logo" src="/logo-n.png" alt="Logo NEOCORE" />
 
         {/* Lado Esquerdo: Hero & Esfera 3D */}
         <section className="hero">
-          <h1>
-            O futuro
-            <br />
-            do
-            <br />
-            marketing
-          </h1>
+          <h1>O Futuro Do Marketing</h1>
           <p className="hero-desc">
-            Criamos experiências digitais na interseção entre design e
-            tecnologia, ajudando nossos clientes a imaginar o futuro.
+            Criamos experiências digitais na interseção entre design e tecnologia, ajudando nossos clientes a imaginar o futuro.
           </p>
 
           {/* Esfera 3D (não clicável diretamente; só abre no login completo) */}

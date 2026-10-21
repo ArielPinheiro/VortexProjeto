@@ -1,54 +1,148 @@
+/* ===== Dashboard Page Styles ===== */
+body:has(.dashboard),
+body.dark-bg {
+  background-color: #020617 !important;
+}
+
 .dashboard {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
   padding: 24px;
   text-align: center;
   color: #e2f1ff;
   background: radial-gradient(circle at 50% 40%, #0d2847 0%, #061529 45%, #020617 100%);
-  animation: dashFadeIn 0.9s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes dashFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+/* Efeito sutil de brilho ambiente no fundo */
+.dashboard::before {
+  content: '';
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Card central com glassmorphism e entrada suave */
+.dashboard-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 440px;
+  width: 100%;
+  padding: 42px 36px;
+  border-radius: 24px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: dashContentEntrance 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes dashContentEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Badge de autenticação */
+.dashboard-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #60a5fa;
+}
+
+.badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
 }
 
 .dashboard h2 {
-  margin: 0;
-  font-size: clamp(28px, 4vw, 44px);
+  margin: 0 0 8px;
+  font-size: clamp(26px, 3.8vw, 36px);
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: #ffffff;
 }
 
 .dashboard p {
   margin: 0;
-  font-size: 14px;
-  color: #9db4d1;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #94a3b8;
 }
 
 .dashboard button {
-  margin-top: 16px;
-  padding: 10px 22px;
+  margin-top: 26px;
+  padding: 11px 26px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
   color: #e2f1ff;
   font: inherit;
   font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dashboard button:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.dashboard button:active {
+  transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dashboard {
+  .dashboard-content {
+    animation: none;
+  }
+  .badge-dot {
     animation: none;
   }
 }
