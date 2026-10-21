@@ -260,6 +260,22 @@ const OrbScene = forwardRef(function OrbScene(_props, ref) {
       s.doneCb = null;
       s.diveTarget = 0;
       s.dive = 0;
+      s.transPhase = 0;
+      s.transProgress = 0;
+    },
+    /**
+     * setTransition({ phase, progress })
+     * Chamado pelo TransitionOrchestrator a cada frame.
+     *   phase 0 = repouso
+     *   phase 1 = saída da UI (globo fica parado)
+     *   phase 2 = globo ao centro (câmera se prepara)
+     *   phase 3 = mergulho (câmera dolly-in)
+     *   phase 4 = dissolve (fade-out)
+     */
+    setTransition({ phase, progress }) {
+      const s = state.current;
+      s.transPhase = phase;
+      s.transProgress = progress;
     },
     get container() {
       return containerRef.current;
@@ -567,16 +583,37 @@ void main(){
         updateColorsFromCss(uniforms);
       }
 
-      s.dive += (s.diveTarget - s.dive) * 0.045;
-      if (s.doneCb && s.dive > 0.97) {
-        const f = s.doneCb;
-        s.doneCb = null;
-        f();
+      /* --- Transição cinematográfica (controlada pelo Orchestrator) --- */
+      const tPhase = s.transPhase || 0;
+      const tProg = s.transProgress || 0;
+
+      if (tPhase >= 3) {
+        /* Fase 3: Câmera dolly-in — z vai de 6 até 0.5 */
+        const eased = tProg * tProg * tProg; // easeInCubic
+        const camZ = 6 - 5.5 * eased;
+        cam.position.set(0, 0.2 * (1 - eased), camZ);
+        cam.lookAt(0, 0, 0);
+        // uDive controla a transparência no shader
+        s.dive = eased;
+      } else if (tPhase >= 1) {
+        /* Fases 1–2: Câmera parada na posição normal */
+        s.dive = 0;
+        cam.position.set(0, 0.2, 6);
+        cam.lookAt(0, 0, 0);
+      } else {
+        /* Fase 0 (repouso) ou sem transição: dive legado */
+        s.dive += (s.diveTarget - s.dive) * 0.045;
+        if (s.doneCb && s.dive > 0.97) {
+          const f = s.doneCb;
+          s.doneCb = null;
+          f();
+        }
+        const d = s.dive * s.dive * (3 - 2 * s.dive); // smoothstep
+        cam.position.set(0, 0.2 * (1 - d), 6 - 5.55 * d);
+        cam.lookAt(0, 0, 0);
       }
 
-      const d = s.dive * s.dive * (3 - 2 * s.dive); // smoothstep
-      cam.position.set(0, 0.2 * (1 - d), 6 - 5.55 * d);
-      cam.lookAt(0, 0, 0);
+      const d = s.dive * s.dive * (3 - 2 * s.dive);
 
       // Suaviza velocidade de rotação (desacelera quando em hover)
       rotSpeed += (targetRotSpeed - rotSpeed) * 0.08;

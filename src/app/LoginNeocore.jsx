@@ -1,12 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import OrbScene from './OrbScene';
+import { useOrb } from './OrbContext';
 import { fazerLogin } from '../services/auth';
 import '../styles/login.css';
 
-export default function LoginNeocore() {
+export default function LoginNeocore({ transRef }) {
   const navigate = useNavigate();
-  const orbRef = useRef(null);
+  const { setSlotRect, isTransitioning } = useOrb();
+
+  const heroRef = useRef(null);
+  const cardRef = useRef(null);
+  const orbSlotRef = useRef(null);
+  const veilRef = useRef(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,12 +19,33 @@ export default function LoginNeocore() {
   const [error, setError] = useState('');
   const [logging, setLogging] = useState(false);
   const [veil, setVeil] = useState(false);
+  const [navigating, setNavigating] = useState(false);
 
   const mfaRefs = useRef([]);
 
   useEffect(() => {
     document.body.classList.remove('dark-bg');
   }, []);
+
+  /* ---------- Registrar o slot do globo ---------- */
+  const updateSlot = useCallback(() => {
+    const el = orbSlotRef.current;
+    if (el && !isTransitioning) {
+      const rect = el.getBoundingClientRect();
+      setSlotRect({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+    }
+  }, [setSlotRect, isTransitioning]);
+
+  useEffect(() => {
+    updateSlot();
+    window.addEventListener('resize', updateSlot);
+    /* Atualizar periodicamente durante o primeiro segundo (layout pode flutuar) */
+    const intervals = [100, 300, 600, 1000].map(ms => setTimeout(updateSlot, ms));
+    return () => {
+      window.removeEventListener('resize', updateSlot);
+      intervals.forEach(clearTimeout);
+    };
+  }, [updateSlot]);
 
   /* ---------- MFA input handlers ---------- */
   const handleMfaInput = (index, value) => {
@@ -50,7 +76,7 @@ export default function LoginNeocore() {
     mfaRefs.current[focusIdx]?.focus();
   };
 
-  /* ---------- Submit ---------- */
+  /* ---------- Submit → Transição Cinematográfica ---------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (logging) return;
@@ -72,66 +98,57 @@ export default function LoginNeocore() {
       return;
     }
 
-    /* Login completo com sucesso → Transição e abertura da esfera */
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-
-    const container = orbRef.current?.container;
-
-    if (container) {
-      /* FLIP animation */
-      const before = container.getBoundingClientRect();
-      container.classList.add('full');
-      const after = container.getBoundingClientRect();
-      const s = before.height / after.height;
-      const dx = before.left + before.width / 2 - (after.left + after.width / 2);
-      const dy = before.top + before.height / 2 - (after.top + after.height / 2);
-
-      if (!prefersReducedMotion) {
-        container.animate(
-          [
-            { transform: `translate(${dx}px,${dy}px) scale(${s})` },
-            { transform: 'none' },
-          ],
-          { duration: 800, easing: 'cubic-bezier(.65,0,.25,1)' }
-        );
-      }
+    /* Login bem-sucedido → Disparar a transição cinematográfica */
+    if (transRef?.current) {
+      transRef.current.start({
+        navigate,
+        targetPath: '/dashboard',
+        heroEl: heroRef.current,
+        cardEl: cardRef.current?.closest('.wrap'),
+      });
+    } else {
+      navigate('/dashboard');
     }
+  };
 
-    /* Exibe véu e ativa fundo escuro para a transição suave */
-    document.body.classList.add('dark-bg');
-    setVeil(true);
+  /* ---------- Navegação suave para Cadastro ---------- */
+  const handleGoToCadastro = () => {
+    if (navigating) return;
+    setNavigating(true);
 
-    const delay = prefersReducedMotion ? 100 : 800;
-
-    setTimeout(() => {
-      if (orbRef.current) {
-        orbRef.current.dive(() => navigate('/dashboard'));
-      } else {
-        navigate('/dashboard');
-      }
-    }, delay);
+    const cardEl = cardRef.current?.closest('.wrap') || cardRef.current;
+    if (cardEl && cardEl.animate) {
+      const anim = cardEl.animate(
+        [
+          { opacity: 1, transform: 'translateX(0)' },
+          { opacity: 0, transform: 'translateX(24px)' },
+        ],
+        { duration: 240, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }
+      );
+      anim.onfinish = () => navigate('/cadastro');
+    } else {
+      navigate('/cadastro');
+    }
   };
 
   return (
     <>
       <div className="page">
 
-        {/* Lado Esquerdo: Hero & Esfera 3D */}
-        <section className="hero">
+        {/* Lado Esquerdo: Hero & Slot do Globo */}
+        <section className="hero" ref={heroRef}>
           <h1>O Futuro Do Marketing</h1>
           <p className="hero-desc">
             Criamos experiências digitais na interseção entre design e tecnologia, ajudando nossos clientes a imaginar o futuro.
           </p>
 
-          {/* Esfera 3D (não clicável diretamente; só abre no login completo) */}
-          <OrbScene ref={orbRef} />
+          {/* Slot placeholder — o globo global se posiciona aqui */}
+          <div ref={orbSlotRef} className="orb-slot" aria-hidden="true" />
         </section>
 
         {/* Lado Direito: Card de Login */}
         <section className="wrap">
-          <form className="card" onSubmit={handleSubmit}>
+          <form className="card" ref={cardRef} onSubmit={handleSubmit}>
             {/* Header com Logo */}
             <header className="brand">
               <img src="/logo-n.png" alt="Logo NEOCORE" />
@@ -244,16 +261,19 @@ export default function LoginNeocore() {
             {/* Rodapé Cadastre-se */}
             <p className="signup">
               Não tem uma conta?{' '}
-              <a href="#cadastre-se" className="link">
+              <button
+                type="button"
+                onClick={handleGoToCadastro}
+                className="link"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+                disabled={navigating}
+              >
                 Cadastre-se
-              </a>
+              </button>
             </p>
           </form>
         </section>
       </div>
-
-      {/* Overlay para fade de transição */}
-      <div className={`veil ${veil ? 'on' : ''}`} />
     </>
   );
 }

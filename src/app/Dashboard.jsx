@@ -1,35 +1,16 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../styles/dashboard.css';
+import { useOrb } from './OrbContext';
+import DashboardContatos from '../components/Dashboard/DashboardContatos';
 
 export default function Dashboard() {
-  const navigate = useNavigate();
+  const { setSlotRect } = useOrb();
 
   useEffect(() => {
-    document.body.classList.add('dark-bg');
-    return () => {
-      document.body.classList.remove('dark-bg');
-    };
-  }, []);
-
-  const handleBackToLogin = () => {
+    // Garante que a classe dark-bg do login seja removida para a estética clara do painel
     document.body.classList.remove('dark-bg');
-    navigate('/');
-  };
+    // Limpa o slot do globo — ele não aparece no dashboard
+    setSlotRect(null);
+  }, [setSlotRect]);
 
-  return (
-    <div className="dashboard">
-      <div className="dashboard-content">
-        <div className="dashboard-badge">
-          <span className="badge-dot" />
-          <span>SESSÃO AUTENTICADA</span>
-        </div>
-        <h2>Login realizado</h2>
-        <p>Aqui entra a próxima página do seu sistema.</p>
-        <button type="button" onClick={handleBackToLogin}>
-          Voltar ao login
-        </button>
-      </div>
-    </div>
-  );
+  return <DashboardContatos />;
 }
