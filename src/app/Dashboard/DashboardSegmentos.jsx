@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import './DashboardSegmentos.css';
+import '../../styles/DashboardSegmentos.css';
 
 // Segmentos iniciais
 const INITIAL_SEGMENTS = [

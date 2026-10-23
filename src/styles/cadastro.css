@@ -28,7 +28,7 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: var(--navy);
   overflow-x: hidden;
-  height: 100%;
+  min-height: 100%;
   transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -261,7 +261,15 @@ a.link:hover {
 .cad-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: clamp(10px, 1.4vh, 13px);
+  width: 100%;
+  max-width: 490px;
+  padding: clamp(24px, 3vh, 32px) clamp(28px, 2.5vw, 38px);
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 26px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  box-sizing: border-box;
 }
 
 .cad-head h2 {
@@ -272,40 +280,46 @@ a.link:hover {
 }
 
 .cad-head p {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   font-size: 13px;
   color: #64748b;
 }
 
 /* ---------- Campos ---------- */
+.cad-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
 .cad-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.cad-field--short {
-  max-width: 180px;
+  gap: 4px;
+  width: 100%;
 }
 
 .cad-field label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #334155;
+  letter-spacing: 0.02em;
 }
 
 .cad-field input {
   width: 100%;
+  height: 42px;
   box-sizing: border-box;
-  padding: 14px 16px;
+  padding: 0 14px;
   font: inherit;
-  font-size: 14px;
+  font-size: 13.5px;
   color: #0f172a;
-  background: rgba(148, 163, 184, 0.14);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 11px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .cad-field input::placeholder {
@@ -324,21 +338,21 @@ a.link:hover {
 }
 
 .cad-err {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #dc2626;
 }
 
 .cad-err--check {
-  margin-top: -6px;
+  margin-top: -4px;
 }
 
 /* ---------- Checkboxes ---------- */
 .cad-check {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  font-size: 13px;
-  line-height: 1.45;
+  gap: 9px;
+  font-size: 12px;
+  line-height: 1.35;
   color: #334155;
   cursor: pointer;
   position: relative;
@@ -352,9 +366,9 @@ a.link:hover {
 }
 
 .cad-box {
-  flex: 0 0 18px;
-  width: 18px;
-  height: 18px;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
   margin-top: 1px;
   border: 1.5px solid #94a3b8;
   border-radius: 5px;
@@ -386,16 +400,18 @@ a.link:hover {
 /* ---------- Botão ---------- */
 .cad-submit {
   width: 100%;
-  margin-top: 4px;
-  padding: 16px;
-  font-size: 14px;
+  height: 42px;
+  min-height: 42px;
+  margin-top: 3px;
+  padding: 0;
+  font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.2px;
   text-transform: none;
   color: #fff;
   background: linear-gradient(90deg, #0b4f9c, #1d4f91);
   border: 0;
-  border-radius: 12px;
+  border-radius: 11px;
   cursor: pointer;
   transition: filter 0.2s, transform 0.1s;
 }
@@ -416,19 +432,20 @@ a.link:hover {
 /* ---------- Aviso LGPD ---------- */
 .cad-notice {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px;
-  font-size: 13px;
-  line-height: 1.45;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  font-size: 11.5px;
+  line-height: 1.35;
   color: #334155;
-  background: rgba(148, 163, 184, 0.16);
-  border-radius: 12px;
+  background: rgba(148, 163, 184, 0.14);
+  border-radius: 9px;
 }
 
 .cad-notice svg {
-  flex: 0 0 auto;
-  margin-top: 1px;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
   color: #1d4f91;
 }
 
@@ -506,89 +523,3 @@ a.link:hover {
   }
 }
 
-/* ===== Correcoes do cadastro NEOCORE ===== */
-.page {
-  width: 100%;
-  min-height: 100vh;
-  height: auto;
-  max-height: none;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  align-items: center;
-  overflow: visible;
-}
-
-.hero,
-.wrap {
-  min-width: 0;
-  width: 100%;
-}
-
-.wrap {
-  justify-content: center;
-  align-items: center;
-}
-
-.card.cad-card {
-  width: 100%;
-  max-width: 520px;
-  min-width: 0;
-  padding: 32px;
-  box-sizing: border-box;
-}
-
-.cad-field,
-.cad-field input,
-.cad-check,
-.cad-notice {
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.cad-field input { width: 100%; }
-
-button.submit.cad-submit {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  min-height: 50px;
-  height: auto;
-  margin: 4px 0 0;
-  padding: 14px 16px;
-  box-sizing: border-box;
-  line-height: 1.4;
-  text-align: center;
-  white-space: normal;
-}
-
-@media (min-width: 901px) and (min-height: 601px) {
-  .page {
-    min-height: 100vh;
-    height: auto;
-    max-height: none;
-    overflow: visible;
-  }
-}
-
-@media (max-width: 900px) {
-  .page {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    padding: 32px 20px;
-    overflow: visible;
-  }
-  .wrap { width: 100%; min-width: 0; }
-  .card.cad-card {
-    width: 100%;
-    max-width: 560px;
-    padding: 28px 24px;
-  }
-}
-
-@media (max-width: 520px) {
-  .page { padding: 24px 14px; }
-  .card.cad-card { padding: 24px 18px; border-radius: 20px; }
-  .cad-field--short { max-width: 100%; }
-  .cad-notice { padding: 12px; overflow-wrap: anywhere; }
-}

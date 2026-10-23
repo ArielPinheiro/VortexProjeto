@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import './DashboardEnriquecimento.css';
+import '../../styles/DashboardEnriquecimento.css';
 
 // Dados mockados da prévia de resultado
 const PREVIEW_DATA = [

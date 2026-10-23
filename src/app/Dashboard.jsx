@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
-import { useOrb } from './OrbContext';
-import DashboardContatos from '../components/Dashboard/DashboardContatos';
+import DashboardContatos from './Dashboard/DashboardContatos';
 
-export default function Dashboard() {
-  const { setSlotRect } = useOrb();
-
+export default function Dashboard({ initialMenu = 'inicio' }) {
   useEffect(() => {
-    // Garante que a classe dark-bg do login seja removida para a estética clara do painel
-    document.body.classList.remove('dark-bg');
-    // Limpa o slot do globo — ele não aparece no dashboard
-    setSlotRect(null);
-  }, [setSlotRect]);
+    document.body.classList.remove('dark-bg', 'auth-no-scroll');
+    document.documentElement.classList.remove('auth-no-scroll');
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.overflowY = 'auto';
+    document.documentElement.style.overflowY = 'auto';
+    document.body.style.height = 'auto';
+    document.documentElement.style.height = 'auto';
+  }, [initialMenu]);
 
-  return <DashboardContatos />;
+  return <DashboardContatos initialMenu={initialMenu} />;
 }

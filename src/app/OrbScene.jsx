@@ -254,9 +254,18 @@ const OrbScene = forwardRef(function OrbScene(_props, ref) {
       s.doneCb = callback;
       s.diveTarget = 1;
     },
+    diveIn(durationMs = 1100) {
+      const s = state.current;
+      if (!s.scene) return;
+      s.isDivingIn = true;
+      s.diveInStart = performance.now();
+      s.diveInDuration = durationMs;
+      s.hovering = false;
+    },
     reset() {
       const s = state.current;
       s.busy = false;
+      s.isDivingIn = false;
       s.doneCb = null;
       s.diveTarget = 0;
       s.dive = 0;
@@ -286,9 +295,19 @@ const OrbScene = forwardRef(function OrbScene(_props, ref) {
     const el = containerRef.current;
     if (!el) return;
 
+    // React 19 StrictMode: limpa qualquer canvas/tooltip remanescente do primeiro ciclo
+    while (el.firstChild) {
+      el.removeChild(el.firstChild);
+    }
+
+    let isDisposed = false;
+
     const T = THREE;
     const scene = new T.Scene();
     const cam = new T.PerspectiveCamera(38, 1, 0.05, 50);
+    cam.position.set(0, 0.2, 6);
+    cam.lookAt(0, 0, 0);
+
     const renderer = new T.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.domElement.style.cssText =
@@ -544,6 +563,7 @@ void main(){
 
     /* ---------- Resize ---------- */
     function size() {
+      if (isDisposed || !el) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (!w || !h) return;
@@ -573,6 +593,7 @@ void main(){
     const basePegmanScale = 0.24;
 
     function tick(now) {
+      if (isDisposed) return;
       const delta = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
       const t = (now - t0) / 1000;
@@ -587,33 +608,53 @@ void main(){
       const tPhase = s.transPhase || 0;
       const tProg = s.transProgress || 0;
 
-      if (tPhase >= 3) {
-        /* Fase 3: Câmera dolly-in — z vai de 6 até 0.5 */
+      /* --- Transição de Mergulho ao Logar (diveIn) --- */
+      if (s.isDivingIn) {
+        const elapsed = now - s.diveInStart;
+        const p = Math.min(1, elapsed / s.diveInDuration);
+        const ease = p * p * (3 - 2 * p);
+        const camZ = 6 - (6 - 2.8) * ease;
+        cam.position.set(0, 0.2 * (1 - ease), camZ);
+        cam.lookAt(0, 0, 0);
+
+        // Desvanece os pegmen rapidamente para imersão limpa no planeta
+        const pegOpacity = Math.max(0, 1 - p * 3.5);
+        pegmenData.forEach((peg) => {
+          peg.sprite.visible = pegOpacity > 0.01;
+          peg.mat.opacity = pegOpacity;
+        });
+
+        mesh.rotation.y += (rotSpeed + 0.5 * ease) * delta;
+        mesh.rotation.x = 0.04 * (1 - ease);
+        mesh.updateMatrixWorld();
+      } else if (tPhase >= 3) {
+        /* Fase 3: Câmera com aproximação limitada (nunca cobre a tela inteira) */
         const eased = tProg * tProg * tProg; // easeInCubic
-        const camZ = 6 - 5.5 * eased;
+        const camZ = Math.max(5.2, 6 - 0.8 * eased);
         cam.position.set(0, 0.2 * (1 - eased), camZ);
         cam.lookAt(0, 0, 0);
         // uDive controla a transparência no shader
-        s.dive = eased;
+        s.dive = Math.min(eased * 0.3, 0.3);
       } else if (tPhase >= 1) {
         /* Fases 1–2: Câmera parada na posição normal */
         s.dive = 0;
         cam.position.set(0, 0.2, 6);
         cam.lookAt(0, 0, 0);
       } else {
-        /* Fase 0 (repouso) ou sem transição: dive legado */
+        /* Fase 0 (repouso) ou sem transição: dive legado limitado */
         s.dive += (s.diveTarget - s.dive) * 0.045;
         if (s.doneCb && s.dive > 0.97) {
           const f = s.doneCb;
           s.doneCb = null;
           f();
         }
-        const d = s.dive * s.dive * (3 - 2 * s.dive); // smoothstep
-        cam.position.set(0, 0.2 * (1 - d), 6 - 5.55 * d);
+        const d = Math.min(s.dive, 0.3);
+        const camZ = Math.max(5.2, 6 - 0.8 * d);
+        cam.position.set(0, 0.2 * (1 - d), camZ);
         cam.lookAt(0, 0, 0);
       }
 
-      const d = s.dive * s.dive * (3 - 2 * s.dive);
+      const d = Math.min(s.dive, 0.3);
 
       // Suaviza velocidade de rotação (desacelera quando em hover)
       rotSpeed += (targetRotSpeed - rotSpeed) * 0.08;
@@ -706,30 +747,55 @@ void main(){
 
     /* ---------- Cleanup ---------- */
     return () => {
-      if (s.animId) cancelAnimationFrame(s.animId);
+      isDisposed = true;
+      if (s.animId) {
+        cancelAnimationFrame(s.animId);
+        s.animId = null;
+      }
       ro.disconnect();
       el.removeEventListener('pointermove', onPointerMove);
       el.removeEventListener('pointerleave', onPointerLeave);
 
       // Limpeza do tooltip
-      if (tooltipEl.parentNode) {
-        tooltipEl.parentNode.removeChild(tooltipEl);
+      if (tooltipEl && tooltipEl.parentNode) {
+        tooltipEl.remove();
       }
 
       // Limpeza dos Pegmen e Texturas
       pegmenData.forEach((peg) => {
         mesh.remove(peg.sprite);
-        peg.mat.dispose();
+        if (peg.mat) peg.mat.dispose();
       });
-      texturesToDispose.forEach((tex) => tex.dispose());
+      texturesToDispose.forEach((tex) => {
+        if (tex && typeof tex.dispose === 'function') tex.dispose();
+      });
 
-      geo.dispose();
-      mat.dispose();
-      renderer.dispose();
+      // Percorre scene e faz dispose de todas as geometrias e materiais
+      scene.traverse((obj) => {
+        if (obj.geometry && typeof obj.geometry.dispose === 'function') {
+          obj.geometry.dispose();
+        }
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((m) => m && typeof m.dispose === 'function' && m.dispose());
+          } else if (typeof obj.material.dispose === 'function') {
+            obj.material.dispose();
+          }
+        }
+      });
 
-      if (renderer.domElement.parentNode) {
-        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      // Dispose do renderer e liberação do WebGL context
+      if (renderer) {
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+          renderer.forceContextLoss();
+        }
+        if (renderer.domElement && renderer.domElement.parentNode) {
+          renderer.domElement.remove();
+        }
       }
+
+      state.current = {};
     };
   }, []);
 

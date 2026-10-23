@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './DashboardPerfilCompleto.css';
+import '../../styles/DashboardPerfilCompleto.css';
 
 export default function DashboardPerfilCompleto({
   contact,

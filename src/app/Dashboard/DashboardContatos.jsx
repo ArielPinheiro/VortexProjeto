@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './DashboardContatos.css';
+import '../../styles/DashboardContatos.css';
 import neocoreLogo from '../../assets/neocore-logo.png';
 import { contactService } from '../../services/contactService';
 import DashboardInicio from './DashboardInicio';
@@ -8,8 +8,11 @@ import DashboardEnriquecimento from './DashboardEnriquecimento';
 import DashboardPerfilCompleto from './DashboardPerfilCompleto';
 import DashboardFichaOrigem from './DashboardFichaOrigem';
 import DashboardSegmentos from './DashboardSegmentos';
+import VortexGovernanca from './DashboardGovernanca';
+import VortexLogs from './DashboardLogs';
+import ImportarNeocore from '../ImportarNeocore';
 
-export default function DashboardContatos() {
+export default function DashboardContatos({ initialMenu = 'inicio' }) {
   const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
   const [selectedContactId, setSelectedContactId] = useState(null);
@@ -18,10 +21,29 @@ export default function DashboardContatos() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [segmentFilter, setSegmentFilter] = useState('ALL');
   const [activeTab, setActiveTab] = useState('gerais');
-  const [activeMenu, setActiveMenu] = useState('inicio');
+  const [activeMenu, setActiveMenu] = useState(initialMenu);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isContactsOpen, setIsContactsOpen] = useState(false);
+  const [isContactsOpen, setIsContactsOpen] = useState(
+    ['todos-contatos', 'completar', 'enriquecimento', 'perfil-completo', 'ficha'].includes(initialMenu)
+  );
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialMenu) {
+      setActiveMenu(initialMenu);
+      if (['todos-contatos', 'completar', 'enriquecimento', 'perfil-completo', 'ficha'].includes(initialMenu)) {
+        setIsContactsOpen(true);
+      }
+    }
+  }, [initialMenu]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.classList.remove('auth-no-scroll');
+    document.documentElement.classList.remove('auth-no-scroll');
+    document.body.style.overflowY = 'auto';
+    document.documentElement.style.overflowY = 'auto';
+  }, [activeMenu]);
 
   // Modais e interações
   const [isNewContactModalOpen, setIsNewContactModalOpen] = useState(false);
@@ -392,10 +414,7 @@ export default function DashboardContatos() {
 
             <div
               className={`nav-item ${activeMenu === 'importar' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveMenu('importar');
-                setIsNewContactModalOpen(true);
-              }}
+              onClick={() => setActiveMenu('importar')}
             >
               <span className="nav-bullet"></span>
               <span className="nav-text">Importar</span>
@@ -501,6 +520,33 @@ export default function DashboardContatos() {
               setIsContactsOpen(true);
               if (contactName) setSearchTerm(contactName);
             }}
+          />
+        ) : activeMenu === 'governanca' ? (
+          <VortexGovernanca
+            embedded={true}
+            onNavigate={(target) => {
+              setActiveMenu(target);
+              if (['todos-contatos', 'completar', 'enriquecimento', 'perfil-completo', 'ficha'].includes(target)) {
+                setIsContactsOpen(true);
+              }
+            }}
+            onShowToast={showToast}
+          />
+        ) : activeMenu === 'logs' ? (
+          <VortexLogs
+            embedded={true}
+            onNavigate={(target) => {
+              setActiveMenu(target);
+              if (['todos-contatos', 'completar', 'enriquecimento', 'perfil-completo', 'ficha'].includes(target)) {
+                setIsContactsOpen(true);
+              }
+            }}
+            onShowToast={showToast}
+          />
+        ) : activeMenu === 'importar' ? (
+          <ImportarNeocore
+            embedded={true}
+            onShowToast={showToast}
           />
         ) : (
           <>

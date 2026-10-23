@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './DashboardInicio.css';
+import '../../styles/DashboardInicio.css';
 
 export default function DashboardInicio({ onNavigateToContacts, onEnrichment, onExport }) {
   const [searchTerm, setSearchTerm] = useState('');

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './DashboardFichaOrigem.css';
+import '../../styles/DashboardFichaOrigem.css';
 
 export default function DashboardFichaOrigem({
   contact,
