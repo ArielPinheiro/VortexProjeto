@@ -146,7 +146,7 @@ export default function VortexGovernanca({ embedded = false, onNavigate, onShowT
                 Exportar relatório
               </button>
               <button
-                className="gov-btn-filled"
+                className="gov-btn-outline"
                 onClick={() => setIsPolicyModalOpen(true)}
               >
                 Configurar políticas
